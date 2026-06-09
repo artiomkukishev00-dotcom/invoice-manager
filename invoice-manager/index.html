@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A&A Construction – Documents</title>
+<style>
+:root {
+  --green: #1a6b35;
+  --green-dark: #124924;
+  --green-light: #e8f5ee;
+  --accent: #f4a623;
+  --red: #c0392b;
+  --bg: #f2f4f3;
+  --card: #ffffff;
+  --text: #1a1a1a;
+  --muted: #6b7280;
+  --border: #dde3df;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+/* NAV */
+nav {
+  background: var(--green-dark); color: white;
+  padding: 0 20px; display: flex; align-items: center; gap: 12px;
+  height: 56px; position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 10px; flex: 1;
+}
+.nav-logo svg { width: 36px; height: 36px; flex-shrink: 0; }
+.nav-logo-text { line-height: 1.15; }
+.nav-logo-text b { font-size: 1.05rem; letter-spacing: .5px; }
+.nav-logo-text small { font-size: .68rem; letter-spacing: 1px; color: #a8d5b5; display: block; }
+nav button {
+  background: rgba(255,255,255,.12); color: white; border: 1px solid rgba(255,255,255,.2);
+  padding: 7px 14px; border-radius: 6px; cursor: pointer; font-size: .82rem; white-space: nowrap;
+  transition: background .15s;
+}
+nav button:hover { background: rgba(255,255,255,.22); }
+nav button.primary { background: var(--accent); border-color: var(--accent); color: #1a1a1a; font-weight: 600; }
+nav button.primary:hover { background: #e0981a; }
+
+/* LAYOUT */
+.app { display: flex; min-height: calc(100vh - 56px); }
+
+/* SIDEBAR */
+.sidebar {
+  width: 260px; background: #1e2e24; flex-shrink: 0;
+  display: flex; flex-direction: column;
+}
+.sidebar-tabs {
+  display: flex; border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.sidebar-tab {
+  flex: 1; padding: 11px 4px; text-align: center; font-size: .75rem;
+  font-weight: 600; letter-spacing: .5px; text-transform: uppercase;
+  color: #6b9e7a; cursor: pointer; border: none; background: none;
+  border-bottom: 2px solid transparent; transition: all .15s;
+}
+.sidebar-tab.active { color: #fff; border-bottom-color: var(--accent); }
+.sidebar-list { flex: 1; overflow-y: auto; padding: 10px 8px; }
+.sidebar-section { font-size: .68rem; text-transform: uppercase; letter-spacing: 1px; color: #4a7a58; padding: 6px 6px 4px; }
+.doc-item {
+  padding: 9px 10px; border-radius: 7px; margin-bottom: 4px;
+  cursor: pointer; transition: background .12s;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.doc-item:hover { background: rgba(255,255,255,.07); }
+.doc-item.active { background: rgba(255,255,255,.12); border-left: 3px solid var(--accent); }
+.doc-item-left .doc-num { font-weight: 700; font-size: .85rem; color: #e0e0e0; }
+.doc-item-left .doc-client { font-size: .74rem; color: #7aaa8a; margin-top: 1px; }
+.doc-item-right { text-align: right; }
+.doc-item-right .doc-amt { font-size: .82rem; font-weight: 600; color: #5ec97a; }
+.doc-item-right .doc-status { font-size: .65rem; color: #5a8a68; }
+.del-doc { background: none; border: none; color: #3a5a44; cursor: pointer; font-size: 1rem; padding: 2px 5px; line-height: 1; }
+.del-doc:hover { color: #e74c3c; }
+.empty-list { color: #3a6a4a; font-size: .82rem; text-align: center; padding: 28px 8px; line-height: 1.6; }
+
+/* EDITOR */
+.editor { flex: 1; padding: 20px; overflow-y: auto; }
+.editor-card {
+  background: var(--card); border-radius: 10px;
+  max-width: 900px; margin: 0 auto;
+  box-shadow: 0 2px 16px rgba(0,0,0,.07);
+  overflow: hidden;
+}
+
+/* DOCUMENT HEADER */
+.doc-header {
+  padding: 24px 28px 0;
+  background: white;
+}
+.doc-header-top {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 18px;
+}
+.doc-header-brand { display: flex; align-items: center; gap: 12px; }
+.doc-header-logo { width: 160px; height: auto; flex-shrink: 0; border-radius: 6px; }
+.doc-header-brand-text .co-name {
+  font-size: .95rem; font-weight: 800; color: var(--green-dark); letter-spacing: .3px;
+  text-transform: uppercase;
+}
+.doc-header-brand-text .co-license { font-size: .73rem; color: var(--muted); margin-top: 2px; }
+.doc-header-doctype { text-align: right; }
+.doc-header-doctype .type-word {
+  font-size: 2.4rem; font-weight: 900; color: var(--green-dark);
+  letter-spacing: 2px; line-height: 1;
+}
+.doc-header-doctype .doc-num { font-size: 1rem; color: var(--muted); margin-top: 3px; }
+
+.doc-from-to {
+  display: grid; grid-template-columns: 1fr 1.4fr auto;
+  gap: 24px; padding: 16px 0 20px;
+  border-top: 2.5px solid var(--green);
+}
+.ftb-label {
+  font-size: .68rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--green); margin-bottom: 5px;
+}
+.ftb-value { font-size: .85rem; line-height: 1.65; color: var(--text); }
+.ftb-value b { font-weight: 700; display: block; }
+.ftb-date { text-align: right; white-space: nowrap; }
+
+/* EDITOR BODY */
+.editor-body { padding: 24px 28px; }
+
+/* TYPE SWITCHER */
+.type-switcher { display: flex; gap: 6px; margin-bottom: 20px; }
+.type-btn {
+  padding: 7px 20px; border-radius: 20px; cursor: pointer; font-size: .82rem;
+  font-weight: 600; border: 2px solid var(--border); background: white; color: var(--muted);
+  transition: all .15s;
+}
+.type-btn.active { background: var(--green); border-color: var(--green); color: white; }
+
+/* FORM */
+.form-row { display: flex; gap: 14px; margin-bottom: 14px; }
+.form-group { flex: 1; }
+.form-group label { display: block; font-size: .73rem; color: var(--muted); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+.form-group input, .form-group textarea, .form-group select {
+  width: 100%; padding: 8px 11px; border: 1.5px solid var(--border);
+  border-radius: 7px; font-size: .88rem; font-family: inherit; background: white;
+  transition: border-color .15s; color: var(--text);
+}
+.form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--green); }
+.form-group textarea { resize: vertical; min-height: 54px; }
+
+.section-title {
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .8px;
+  color: var(--green); font-weight: 700; padding: 14px 0 8px;
+  border-top: 1.5px solid var(--green-light); margin-top: 8px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+/* LINE ITEMS */
+.items-head {
+  display: grid; gap: 6px; font-size: .68rem; color: var(--muted);
+  font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+  padding: 0 0 5px; border-bottom: 1px solid var(--border);
+}
+.items-head.labor-head { grid-template-columns: 1fr 80px 95px 85px 70px 28px; }
+.line-row { display: grid; gap: 6px; margin-top: 6px; align-items: center; }
+.line-row.labor-row { grid-template-columns: 1fr 80px 95px 85px 70px 28px; }
+.line-row input {
+  padding: 7px 9px; border: 1.5px solid var(--border); border-radius: 6px;
+  font-size: .85rem; font-family: inherit; width: 100%; background: white;
+}
+.line-row input:focus { outline: none; border-color: var(--green); }
+.line-total { font-weight: 600; font-size: .85rem; color: var(--green-dark); text-align: right; padding-right: 2px; }
+.del-line { background: none; border: none; cursor: pointer; color: #ccc; font-size: 1rem; padding: 2px; line-height: 1; }
+.del-line:hover { color: var(--red); }
+.add-row-btn {
+  margin-top: 8px; width: 100%; padding: 7px; background: none;
+  border: 1.5px dashed var(--border); border-radius: 6px; cursor: pointer;
+  font-size: .82rem; color: var(--muted); transition: all .15s;
+}
+.add-row-btn:hover { border-color: var(--green); color: var(--green); }
+
+/* MATERIALS CALCULATOR */
+.mat-section { background: #f7fcf9; border: 1.5px solid #c8e6d4; border-radius: 8px; padding: 16px; margin-top: 8px; }
+.mat-section .items-head { grid-template-columns: 1fr 80px 85px 85px 70px 28px; }
+.mat-section .line-row { grid-template-columns: 1fr 80px 85px 85px 70px 28px; }
+.mat-note { font-size: .73rem; color: var(--muted); margin-top: 8px; }
+.mat-note input[type=checkbox] { margin-right: 5px; vertical-align: middle; }
+
+/* TOTALS */
+.totals-wrap { display: flex; justify-content: flex-end; margin-top: 16px; }
+.totals-table { min-width: 270px; }
+.t-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: .88rem; color: var(--muted); }
+.t-row.final {
+  border-top: 2px solid var(--green-dark); margin-top: 8px; padding-top: 10px;
+  font-size: 1.1rem; font-weight: 800; color: var(--green-dark);
+}
+.t-row.mat-row { color: #1a6b35; }
+.tax-input { width: 48px; padding: 2px 5px; border: 1px solid var(--border); border-radius: 4px; font-size: .82rem; margin: 0 4px; }
+
+/* STATUS */
+.status-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.status-btn {
+  padding: 5px 16px; border-radius: 20px; font-size: .78rem; font-weight: 700;
+  cursor: pointer; border: none; letter-spacing: .3px;
+}
+.s-draft { background: #fff3cd; color: #856404; }
+.s-sent  { background: #cff4fc; color: #055160; }
+.s-approved { background: #d1e7dd; color: #0a3622; }
+.s-paid  { background: #d1e7dd; color: #0a3622; }
+
+/* NOTES */
+.notes-block { margin-top: 16px; }
+.notes-block label { font-size: .73rem; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); font-weight: 700; display: block; margin-bottom: 4px; }
+.notes-block textarea {
+  width: 100%; padding: 9px 11px; border: 1.5px solid var(--border);
+  border-radius: 7px; font-size: .84rem; font-family: inherit; resize: vertical; min-height: 62px;
+}
+.notes-block textarea:focus { outline: none; border-color: var(--green); }
+
+/* ACTIONS */
+.doc-actions { display: flex; gap: 8px; justify-content: flex-end; padding: 16px 28px; border-top: 1px solid var(--border); background: #fafafa; }
+.btn { padding: 9px 20px; border-radius: 7px; cursor: pointer; font-size: .85rem; border: none; font-weight: 600; transition: all .12s; }
+.btn-ghost { background: white; color: var(--muted); border: 1.5px solid var(--border); }
+.btn-ghost:hover { border-color: #999; color: var(--text); }
+.btn-save { background: var(--green); color: white; }
+.btn-save:hover { background: var(--green-dark); }
+.btn-print { background: var(--accent); color: #1a1a1a; }
+.btn-print:hover { background: #e0981a; }
+
+/* WELCOME */
+.welcome { flex: 1; display: flex; align-items: center; justify-content: center; }
+.welcome-inner { text-align: center; color: var(--muted); max-width: 300px; }
+.welcome-inner .wi { font-size: 3.5rem; margin-bottom: 14px; }
+.welcome-inner p { font-size: .92rem; line-height: 1.7; }
+
+/* MODAL */
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center; z-index: 300;
+}
+.modal-box { background: white; border-radius: 12px; padding: 28px; width: 420px; max-width: 95vw; }
+.modal-box h2 { margin-bottom: 18px; color: var(--green-dark); }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.hidden { display: none !important; }
+
+/* ── PRINT ─────────────────────────────────────────────── */
+@media print {
+  nav, .sidebar, .doc-actions, .type-switcher, .status-row,
+  .add-row-btn, .del-line, .del-doc, .mat-section { display: none !important; }
+  body, .editor { background: white; padding: 0; }
+  .app { display: block; }
+  .editor { padding: 0; }
+  .editor-card { border-radius: 0; box-shadow: none; max-width: 100%; }
+  .editor-body { padding: 20px 28px; }
+  .doc-header { padding: 20px 24px 0; }
+  .doc-from-to { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-mat { display: block !important; }
+}
+.print-mat { display: none; }
+
+/* scrollbar */
+.sidebar-list::-webkit-scrollbar { width: 4px; }
+.sidebar-list::-webkit-scrollbar-track { background: transparent; }
+.sidebar-list::-webkit-scrollbar-thumb { background: #2a4a34; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <img src="logo.png" style="height:38px;width:auto;border-radius:4px" alt="A&A Construction and Renovation LLC">
+  </div>
+  <button onclick="openNewDoc('estimate')">+ Estimate</button>
+  <button class="primary" onclick="openNewDoc('invoice')">+ Invoice</button>
+</nav>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-tabs">
+      <button class="sidebar-tab active" id="tab-all" onclick="setTab('all')">All</button>
+      <button class="sidebar-tab" id="tab-estimate" onclick="setTab('estimate')">Estimates</button>
+      <button class="sidebar-tab" id="tab-invoice" onclick="setTab('invoice')">Invoices</button>
+    </div>
+    <div class="sidebar-list" id="docList"></div>
+  </div>
+
+  <!-- EDITOR -->
+  <div class="editor" id="editorArea">
+    <div class="welcome">
+      <div class="welcome-inner">
+        <div class="wi">🏗️</div>
+        <p>A&amp;A Construction and Renovation LLC<br><br>Select a document or create a new <b>Estimate</b> or <b>Invoice</b>.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-bg hidden" id="settingsModal">
+  <div class="modal-box">
+    <h2>Company Settings</h2>
+    <div class="form-row">
+      <div class="form-group"><label>Company Name</label><input id="s_name"></div>
+      <div class="form-group"><label>Owner / Contact Name</label><input id="s_owner"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px"><label>Address</label><textarea id="s_address" rows="2"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Phone</label><input id="s_phone"></div>
+      <div class="form-group"><label>Email</label><input id="s_email"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>HIC License</label><input id="s_license"></div>
+      <div class="form-group"><label>EIN / Tax ID</label><input id="s_ein"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('settingsModal')">Cancel</button>
+      <button class="btn btn-save" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// COMPANY DEFAULTS (A&A)
+// ─────────────────────────────────────────────────────────────
+const COMPANY_DEFAULTS = {
+  name: 'A&A Construction and Renovation LLC',
+  owner: 'ARTSIOM KUKISHAU',
+  address: '1 Madison Ave, Apt H-2\nWarminster, PA 18974',
+  phone: '+1 (267) 979-5505',
+  email: '',
+  license: 'HIC License #PA200647',
+  ein: ''
+};
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${m}.${d}.${y}`;
+}
+
+let company = JSON.parse(localStorage.getItem('aa_company') || 'null') || { ...COMPANY_DEFAULTS };
+let docs    = JSON.parse(localStorage.getItem('aa_docs') || '[]');
+let currentId = null;
+let sidebarTab = 'all';
+
+// ─────────────────────────────────────────────────────────────
+// PERSIST
+// ─────────────────────────────────────────────────────────────
+function persist() { localStorage.setItem('aa_docs', JSON.stringify(docs)); }
+
+// ─────────────────────────────────────────────────────────────
+// COUNTERS
+// ─────────────────────────────────────────────────────────────
+function nextNum(type) {
+  const prefix = type === 'invoice' ? 'INV' : 'EST';
+  const existing = docs.filter(d => d.type === type);
+  return prefix + '-' + String(existing.length + 1).padStart(3, '0');
+}
+
+// ─────────────────────────────────────────────────────────────
+// CALC
+// ─────────────────────────────────────────────────────────────
+function calcLabor(doc) {
+  return (doc.laborItems || []).reduce((s, r) => s + row$(r), 0);
+}
+function calcMaterials(doc) {
+  return (doc.matItems || []).reduce((s, r) => s + row$(r), 0);
+}
+function row$(r) {
+  return (parseFloat(r.qty) || 0) * (parseFloat(r.price) || 0);
+}
+function calcSubtotal(doc) {
+  const labor = calcLabor(doc);
+  const mat   = doc.includeMat ? calcMaterials(doc) : 0;
+  return labor + mat;
+}
+function calcTotal(doc) {
+  const sub = calcSubtotal(doc);
+  return sub + sub * (parseFloat(doc.taxRate) || 0) / 100;
+}
+
+// ─────────────────────────────────────────────────────────────
+// SIDEBAR
+// ─────────────────────────────────────────────────────────────
+function setTab(t) {
+  sidebarTab = t;
+  ['all','estimate','invoice'].forEach(x => {
+    document.getElementById('tab-'+x).classList.toggle('active', x === t);
+  });
+  renderList();
+}
+
+function renderList() {
+  const el = document.getElementById('docList');
+  const list = docs.filter(d => sidebarTab === 'all' || d.type === sidebarTab).slice().reverse();
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-list">No documents yet.<br>Use the buttons above.</div>`;
+    return;
+  }
+  const statusLabel = { draft:'Draft', sent:'Sent', approved:'Approved', paid:'Paid ✓' };
+  el.innerHTML = list.map(d => `
+    <div class="doc-item ${d.id === currentId ? 'active' : ''}" onclick="openDoc('${d.id}')">
+      <div class="doc-item-left">
+        <div class="doc-num">${d.number}</div>
+        <div class="doc-client">${d.client || 'No client'}</div>
+      </div>
+      <div class="doc-item-right">
+        <div class="doc-amt">$${calcTotal(d).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <div class="doc-status">${statusLabel[d.status]||d.status}</div>
+      </div>
+      <button class="del-doc" onclick="delDoc(event,'${d.id}')">×</button>
+    </div>
+  `).join('');
+}
+
+// ─────────────────────────────────────────────────────────────
+// NEW DOC
+// ─────────────────────────────────────────────────────────────
+function openNewDoc(type) {
+  const today = new Date().toISOString().slice(0,10);
+  const due   = new Date(Date.now() + 30*86400000).toISOString().slice(0,10);
+  const doc = {
+    id: Date.now().toString(), type,
+    number: nextNum(type),
+    date: today, due,
+    client: '', clientAddr: '', clientEmail: '', clientPhone: '',
+    projectAddr: '',
+    status: 'draft',
+    taxRate: 0,
+    includeMat: false,
+    notes: type === 'invoice'
+      ? 'Payment due within 30 days. Checks payable to A&A Construction and Renovation LLC.'
+      : 'This estimate is valid for 30 days. Price subject to change after expiration.',
+    laborItems: [{ desc: '', qty: 1, unit: 'hr', price: '' }],
+    matItems:   [{ desc: '', qty: 1, unit: 'ea', price: '' }]
+  };
+  docs.push(doc);
+  persist();
+  openDoc(doc.id);
+}
+
+// ─────────────────────────────────────────────────────────────
+// OPEN / RENDER
+// ─────────────────────────────────────────────────────────────
+function openDoc(id) {
+  currentId = id;
+  renderList();
+  const doc = docs.find(d => d.id === id);
+  if (!doc) return;
+  renderEditor(doc);
+}
+
+function getDoc() { return docs.find(d => d.id === currentId); }
+
+function renderEditor(doc) {
+  const c = company;
+  const typeLabel = doc.type === 'invoice' ? 'INVOICE' : 'ESTIMATE';
+  const statusCycle = { draft:'sent', sent: doc.type==='invoice'?'paid':'approved', approved:'paid', paid:'draft' };
+  const statusClass = { draft:'s-draft', sent:'s-sent', approved:'s-approved', paid:'s-paid' };
+  const statusText  = { draft:'Draft', sent:'Sent', approved:'Approved ✓', paid:'Paid ✓' };
+
+  const laborRows = doc.laborItems.map((r,i) => laborRow(r,i)).join('');
+  const matRows   = doc.matItems.map((r,i) => matRow(r,i)).join('');
+
+  const laborSub  = calcLabor(doc);
+  const matTotal  = calcMaterials(doc);
+  const sub       = calcSubtotal(doc);
+  const taxAmt    = sub * (parseFloat(doc.taxRate)||0) / 100;
+  const total     = sub + taxAmt;
+
+  document.getElementById('editorArea').innerHTML = `
+  <div class="editor-card">
+
+    <!-- DOCUMENT HEADER -->
+    <div class="doc-header">
+      <div class="doc-header-top">
+        <div class="doc-header-brand">
+          <img src="logo.png" class="doc-header-logo" alt="A&A Construction and Renovation LLC">
+          <div class="doc-header-brand-text">
+            <div class="co-license" style="margin-top:4px">${c.license||'HIC License #PA200647'}</div>
+            ${c.phone?`<div class="co-license">${c.phone}</div>`:''}
+          </div>
+        </div>
+        <div class="doc-header-doctype">
+          <div class="type-word">${typeLabel}</div>
+          <div class="doc-num">№ ${doc.number.replace(/^[A-Z]+-/,'')}</div>
+        </div>
+      </div>
+      <div class="doc-from-to">
+        <div class="ftb">
+          <div class="ftb-label">From</div>
+          <div class="ftb-value">
+            <b>${c.owner||'ARTSIOM KUKISHAU'}</b>
+            ${c.address.replace(/\n/g,'<br>')}${c.phone?'<br>'+c.phone:''}${c.email?'<br>'+c.email:''}
+          </div>
+        </div>
+        <div class="ftb">
+          <div class="ftb-label">To</div>
+          <div class="ftb-value">
+            <b>${doc.client||'—'}</b>
+            ${doc.clientAddr?doc.clientAddr.replace(/\n/g,'<br>'):''}${doc.clientPhone?'<br>'+doc.clientPhone:''}${doc.clientEmail?'<br>'+doc.clientEmail:''}
+          </div>
+        </div>
+        <div class="ftb ftb-date">
+          <div class="ftb-label">Date</div>
+          <div class="ftb-value">${fmtDate(doc.date)}</div>
+          <div class="ftb-label" style="margin-top:10px">${doc.type==='invoice'?'Due Date':'Valid Until'}</div>
+          <div class="ftb-value">${fmtDate(doc.due)}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-body">
+
+      <!-- TYPE + STATUS -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div class="type-switcher">
+          <button class="type-btn ${doc.type==='estimate'?'active':''}" onclick="switchType('estimate')">Estimate</button>
+          <button class="type-btn ${doc.type==='invoice'?'active':''}" onclick="switchType('invoice')">Invoice</button>
+        </div>
+        <div class="status-row" style="margin:0">
+          <span style="font-size:.78rem;color:var(--muted)">Status:</span>
+          <button class="status-btn ${statusClass[doc.status]||'s-draft'}" onclick="cycleStatus()">${statusText[doc.status]||doc.status} ›</button>
+        </div>
+      </div>
+
+      <!-- DOC META -->
+      <div class="form-row">
+        <div class="form-group"><label>Document #</label><input value="${doc.number}" oninput="uf('number',this.value)"></div>
+        <div class="form-group"><label>Date</label><input type="date" value="${doc.date}" oninput="uf('date',this.value)"></div>
+        <div class="form-group"><label>${doc.type==='invoice'?'Due Date':'Valid Until'}</label><input type="date" value="${doc.due}" oninput="uf('due',this.value)"></div>
+      </div>
+
+      <!-- CLIENT -->
+      <div class="section-title">Client / Job Info</div>
+      <div class="form-row">
+        <div class="form-group"><label>Client Name</label><input value="${doc.client||''}" oninput="uf('client',this.value)" placeholder="Full name or company"></div>
+        <div class="form-group"><label>Phone</label><input value="${doc.clientPhone||''}" oninput="uf('clientPhone',this.value)" placeholder="+1 (xxx) xxx-xxxx"></div>
+        <div class="form-group"><label>Email</label><input value="${doc.clientEmail||''}" oninput="uf('clientEmail',this.value)" placeholder="client@email.com"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Billing Address</label><textarea oninput="uf('clientAddr',this.value)" rows="2" placeholder="Street, City, State ZIP">${doc.clientAddr||''}</textarea></div>
+        <div class="form-group"><label>Project / Job Address</label><textarea oninput="uf('projectAddr',this.value)" rows="2" placeholder="If different from billing">${doc.projectAddr||''}</textarea></div>
+      </div>
+
+      <!-- LABOR / SERVICES -->
+      <div class="section-title">
+        <span>Labor &amp; Services</span>
+      </div>
+      <div class="items-head labor-head">
+        <span>Description</span><span style="text-align:center">Qty</span><span>Unit</span><span>Unit Price</span><span style="text-align:right">Total</span><span></span>
+      </div>
+      <div id="laborRows">${laborRows}</div>
+      <button class="add-row-btn" onclick="addLabor()">+ Add Labor Row</button>
+
+      <!-- MATERIALS CALCULATOR -->
+      <div class="section-title">
+        <span>Materials for the Project</span>
+        <label style="font-size:.78rem;color:var(--green);cursor:pointer;font-weight:600">
+          <input type="checkbox" ${doc.includeMat?'checked':''} onchange="uf('includeMat',this.checked);rerender()" style="margin-right:4px">
+          Include in total
+        </label>
+      </div>
+      <div class="mat-section">
+        <div class="items-head" style="grid-template-columns:1fr 80px 85px 85px 70px 28px">
+          <span>Material</span><span style="text-align:center">Qty</span><span>Unit</span><span>Unit Price</span><span style="text-align:right">Cost</span><span></span>
+        </div>
+        <div id="matRows">${matRows}</div>
+        <button class="add-row-btn" onclick="addMat()">+ Add Material</button>
+        <div class="mat-note">
+          Total materials: <b style="color:var(--green)">$${matTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</b>
+          ${doc.includeMat ? ' — <span style="color:var(--green)">included in invoice total</span>' : ' — not shown to client'}
+        </div>
+      </div>
+
+      <!-- TOTALS -->
+      <div class="totals-wrap">
+        <div class="totals-table" id="totalsBlock">
+          ${totalsHTML(doc)}
+        </div>
+      </div>
+
+      <!-- NOTES -->
+      <div class="notes-block">
+        <label>Notes / Terms</label>
+        <textarea oninput="uf('notes',this.value)">${doc.notes||''}</textarea>
+      </div>
+
+    </div><!-- /editor-body -->
+
+    <div class="doc-actions">
+      <button class="btn btn-ghost" onclick="duplicateDoc()">Duplicate</button>
+      <button class="btn btn-save" onclick="saveNow(this)">Save</button>
+      <button class="btn btn-print" onclick="window.print()">🖨 Print / PDF</button>
+    </div>
+
+  </div><!-- /editor-card -->
+  `;
+}
+
+function totalsHTML(doc) {
+  const laborSub = calcLabor(doc);
+  const matTotal = calcMaterials(doc);
+  const sub      = calcSubtotal(doc);
+  const taxRate  = parseFloat(doc.taxRate) || 0;
+  const taxAmt   = sub * taxRate / 100;
+  const total    = sub + taxAmt;
+  const fmt = n => n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return `
+    <div class="t-row"><span>Labor Subtotal</span><span>$${fmt(laborSub)}</span></div>
+    ${doc.includeMat ? `<div class="t-row mat-row"><span>Materials</span><span>$${fmt(matTotal)}</span></div>` : ''}
+    <div class="t-row"><span>Tax <input class="tax-input" type="number" min="0" max="100" step="0.5" value="${taxRate}" oninput="uf('taxRate',this.value);refreshTotals()"> %</span><span>$${fmt(taxAmt)}</span></div>
+    <div class="t-row final"><span>TOTAL</span><span>$${fmt(total)}</span></div>
+  `;
+}
+
+function refreshTotals() {
+  const doc = getDoc(); if (!doc) return;
+  const el = document.getElementById('totalsBlock');
+  if (el) el.innerHTML = totalsHTML(doc);
+  renderList();
+}
+
+// ─────────────────────────────────────────────────────────────
+// ROW TEMPLATES
+// ─────────────────────────────────────────────────────────────
+function laborRow(r, i) {
+  const t = row$(r);
+  return `<div class="line-row labor-row" id="lr-${i}">
+    <input value="${esc(r.desc)}" oninput="ul(${i},'desc',this.value)" placeholder="Work description">
+    <input value="${r.qty}" oninput="ul(${i},'qty',this.value)" type="number" min="0" step="0.5" style="text-align:center">
+    <input value="${esc(r.unit)}" oninput="ul(${i},'unit',this.value)" placeholder="hr / sqft / ls">
+    <input value="${r.price}" oninput="ul(${i},'price',this.value)" type="number" min="0" step="0.01" placeholder="0.00">
+    <div class="line-total" id="lt-${i}">$${t.toFixed(2)}</div>
+    <button class="del-line" onclick="removeLabor(${i})">×</button>
+  </div>`;
+}
+
+function matRow(r, i) {
+  const t = row$(r);
+  return `<div class="line-row" style="grid-template-columns:1fr 80px 85px 85px 70px 28px" id="mr-${i}">
+    <input value="${esc(r.desc)}" oninput="um(${i},'desc',this.value)" placeholder="Material name">
+    <input value="${r.qty}" oninput="um(${i},'qty',this.value)" type="number" min="0" step="0.5" style="text-align:center">
+    <input value="${esc(r.unit)}" oninput="um(${i},'unit',this.value)" placeholder="sqft / bag / ea">
+    <input value="${r.price}" oninput="um(${i},'price',this.value)" type="number" min="0" step="0.01" placeholder="0.00">
+    <div class="line-total" id="mt-${i}">$${t.toFixed(2)}</div>
+    <button class="del-line" onclick="removeMat(${i})">×</button>
+  </div>`;
+}
+
+function esc(s) { return (s||'').replace(/"/g,'&quot;'); }
+
+// ─────────────────────────────────────────────────────────────
+// FIELD UPDATES
+// ─────────────────────────────────────────────────────────────
+function uf(key, val) {
+  const doc = getDoc(); if (!doc) return;
+  doc[key] = val; persist();
+  if (['number','client','type'].includes(key)) renderList();
+}
+
+function ul(i, key, val) { // update labor row
+  const doc = getDoc(); if (!doc) return;
+  doc.laborItems[i][key] = val; persist();
+  const t = row$(doc.laborItems[i]);
+  const el = document.getElementById('lt-'+i);
+  if (el) el.textContent = '$' + t.toFixed(2);
+  refreshTotals();
+}
+
+function um(i, key, val) { // update mat row
+  const doc = getDoc(); if (!doc) return;
+  doc.matItems[i][key] = val; persist();
+  const t = row$(doc.matItems[i]);
+  const el = document.getElementById('mt-'+i);
+  if (el) el.textContent = '$' + t.toFixed(2);
+  // update mat note
+  const matTotal = calcMaterials(doc);
+  const noteEl = document.querySelector('.mat-note');
+  if (noteEl) noteEl.innerHTML = `Total materials: <b style="color:var(--green)">$${matTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</b>${doc.includeMat?' — <span style="color:var(--green)">included in invoice total</span>':' — not shown to client'}`;
+  refreshTotals();
+}
+
+function addLabor() {
+  const doc = getDoc(); if (!doc) return;
+  doc.laborItems.push({ desc:'', qty:1, unit:'hr', price:'' });
+  persist();
+  const container = document.getElementById('laborRows');
+  if (container) container.insertAdjacentHTML('beforeend', laborRow(doc.laborItems.at(-1), doc.laborItems.length-1));
+}
+
+function removeLabor(i) {
+  const doc = getDoc(); if (!doc) return;
+  if (doc.laborItems.length === 1) return;
+  doc.laborItems.splice(i, 1); persist(); rerender();
+}
+
+function addMat() {
+  const doc = getDoc(); if (!doc) return;
+  doc.matItems.push({ desc:'', qty:1, unit:'ea', price:'' });
+  persist();
+  const container = document.getElementById('matRows');
+  if (container) container.insertAdjacentHTML('beforeend', matRow(doc.matItems.at(-1), doc.matItems.length-1));
+}
+
+function removeMat(i) {
+  const doc = getDoc(); if (!doc) return;
+  if (doc.matItems.length === 1) return;
+  doc.matItems.splice(i, 1); persist(); rerender();
+}
+
+function rerender() {
+  const doc = getDoc(); if (!doc) return;
+  renderEditor(doc);
+}
+
+function switchType(type) {
+  const doc = getDoc(); if (!doc) return;
+  doc.type = type;
+  doc.number = nextNum(type);
+  if (type === 'invoice') doc.notes = 'Payment due within 30 days. Checks payable to A&A Construction and Renovation LLC.';
+  else doc.notes = 'This estimate is valid for 30 days. Price subject to change after expiration.';
+  persist(); rerender(); renderList();
+}
+
+function cycleStatus() {
+  const doc = getDoc(); if (!doc) return;
+  const cycle = { draft:'sent', sent: doc.type==='invoice'?'paid':'approved', approved:'paid', paid:'draft' };
+  doc.status = cycle[doc.status] || 'draft';
+  persist(); rerender();
+}
+
+function duplicateDoc() {
+  const doc = getDoc(); if (!doc) return;
+  const copy = JSON.parse(JSON.stringify(doc));
+  copy.id = Date.now().toString();
+  copy.number = nextNum(copy.type);
+  copy.status = 'draft';
+  copy.date = new Date().toISOString().slice(0,10);
+  copy.due  = new Date(Date.now()+30*86400000).toISOString().slice(0,10);
+  docs.push(copy); persist(); openDoc(copy.id);
+}
+
+function delDoc(e, id) {
+  e.stopPropagation();
+  if (!confirm('Delete this document?')) return;
+  docs = docs.filter(d => d.id !== id);
+  if (currentId === id) {
+    currentId = null;
+    document.getElementById('editorArea').innerHTML = `<div class="welcome"><div class="welcome-inner"><div class="wi">🏗️</div><p>Select or create a document.</p></div></div>`;
+  }
+  persist(); renderList();
+}
+
+function saveNow(btn) {
+  persist();
+  if (btn) { const orig = btn.textContent; btn.textContent = '✓ Saved'; setTimeout(()=>btn.textContent=orig,1200); }
+}
+
+// ─────────────────────────────────────────────────────────────
+// SETTINGS
+// ─────────────────────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('s_name').value    = company.name    || '';
+  document.getElementById('s_owner').value   = company.owner   || '';
+  document.getElementById('s_address').value = company.address || '';
+  document.getElementById('s_phone').value   = company.phone   || '';
+  document.getElementById('s_email').value   = company.email   || '';
+  document.getElementById('s_license').value = company.license || '';
+  document.getElementById('s_ein').value     = company.ein     || '';
+  document.getElementById('settingsModal').classList.remove('hidden');
+}
+
+function saveSettings() {
+  company = {
+    name:    document.getElementById('s_name').value,
+    owner:   document.getElementById('s_owner').value,
+    address: document.getElementById('s_address').value,
+    phone:   document.getElementById('s_phone').value,
+    email:   document.getElementById('s_email').value,
+    license: document.getElementById('s_license').value,
+    ein:     document.getElementById('s_ein').value,
+  };
+  localStorage.setItem('aa_company', JSON.stringify(company));
+  closeModal('settingsModal');
+  if (currentId) rerender();
+}
+
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+// ─────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────
+renderList();
+</script>
+</body>
+</html>
