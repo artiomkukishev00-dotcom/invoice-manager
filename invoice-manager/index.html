@@ -98,7 +98,7 @@ nav button.primary:hover { background: #e0981a; }
   margin-bottom: 18px;
 }
 .doc-header-brand { display: flex; align-items: center; gap: 12px; }
-.doc-header-logo { width: 160px; height: auto; flex-shrink: 0; border-radius: 6px; }
+.doc-header-logo { width: 180px; height: auto; flex-shrink: 0; }
 .doc-header-brand-text .co-name {
   font-size: .95rem; font-weight: 800; color: var(--green-dark); letter-spacing: .3px;
   text-transform: uppercase;
@@ -314,6 +314,17 @@ nav button.primary:hover { background: #e0981a; }
       <div class="form-group"><label>HIC License</label><input id="s_license"></div>
       <div class="form-group"><label>EIN / Tax ID</label><input id="s_ein"></div>
     </div>
+    <hr style="margin:16px 0;border:none;border-top:1.5px solid var(--border)">
+    <h3 style="font-size:.9rem;color:var(--green-dark);margin-bottom:12px">Client Info</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Client Name</label><input id="s_client" placeholder="Full name or company"></div>
+      <div class="form-group"><label>Client Phone</label><input id="s_clientPhone" placeholder="+1 (xxx) xxx-xxxx"></div>
+      <div class="form-group"><label>Client Email</label><input id="s_clientEmail" placeholder="client@email.com"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Billing Address</label><textarea id="s_clientAddr" rows="2" placeholder="Street, City, State ZIP"></textarea></div>
+      <div class="form-group"><label>Project / Job Address</label><textarea id="s_projectAddr" rows="2" placeholder="If different from billing"></textarea></div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('settingsModal')">Cancel</button>
       <button class="btn btn-save" onclick="saveSettings()">Save</button>
@@ -332,7 +343,12 @@ const COMPANY_DEFAULTS = {
   phone: '+1 (267) 979-5505',
   email: '',
   license: 'HIC License #PA200647',
-  ein: ''
+  ein: '',
+  client: '',
+  clientPhone: '',
+  clientEmail: '',
+  clientAddr: '',
+  projectAddr: ''
 };
 
 function fmtDate(iso) {
@@ -500,8 +516,8 @@ function renderEditor(doc) {
         <div class="ftb">
           <div class="ftb-label">To</div>
           <div class="ftb-value">
-            <b>${doc.client||'—'}</b>
-            ${doc.clientAddr?doc.clientAddr.replace(/\n/g,'<br>'):''}${doc.clientPhone?'<br>'+doc.clientPhone:''}${doc.clientEmail?'<br>'+doc.clientEmail:''}
+            <b>${c.client||'—'}</b>
+            ${c.clientAddr?c.clientAddr.replace(/\n/g,'<br>'):''}${c.clientPhone?'<br>'+c.clientPhone:''}${c.clientEmail?'<br>'+c.clientEmail:''}
           </div>
         </div>
         <div class="ftb ftb-date">
@@ -532,18 +548,6 @@ function renderEditor(doc) {
         <div class="form-group"><label>Document #</label><input value="${doc.number}" oninput="uf('number',this.value)"></div>
         <div class="form-group"><label>Date</label><input type="date" value="${doc.date}" oninput="uf('date',this.value)"></div>
         <div class="form-group"><label>${doc.type==='invoice'?'Due Date':'Valid Until'}</label><input type="date" value="${doc.due}" oninput="uf('due',this.value)"></div>
-      </div>
-
-      <!-- CLIENT -->
-      <div class="section-title">Client / Job Info</div>
-      <div class="form-row">
-        <div class="form-group"><label>Client Name</label><input value="${doc.client||''}" oninput="uf('client',this.value)" placeholder="Full name or company"></div>
-        <div class="form-group"><label>Phone</label><input value="${doc.clientPhone||''}" oninput="uf('clientPhone',this.value)" placeholder="+1 (xxx) xxx-xxxx"></div>
-        <div class="form-group"><label>Email</label><input value="${doc.clientEmail||''}" oninput="uf('clientEmail',this.value)" placeholder="client@email.com"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Billing Address</label><textarea oninput="uf('clientAddr',this.value)" rows="2" placeholder="Street, City, State ZIP">${doc.clientAddr||''}</textarea></div>
-        <div class="form-group"><label>Project / Job Address</label><textarea oninput="uf('projectAddr',this.value)" rows="2" placeholder="If different from billing">${doc.projectAddr||''}</textarea></div>
       </div>
 
       <!-- LABOR / SERVICES -->
@@ -764,25 +768,35 @@ function saveNow(btn) {
 // SETTINGS
 // ─────────────────────────────────────────────────────────────
 function openSettings() {
-  document.getElementById('s_name').value    = company.name    || '';
-  document.getElementById('s_owner').value   = company.owner   || '';
-  document.getElementById('s_address').value = company.address || '';
-  document.getElementById('s_phone').value   = company.phone   || '';
-  document.getElementById('s_email').value   = company.email   || '';
-  document.getElementById('s_license').value = company.license || '';
-  document.getElementById('s_ein').value     = company.ein     || '';
+  document.getElementById('s_name').value        = company.name        || '';
+  document.getElementById('s_owner').value       = company.owner       || '';
+  document.getElementById('s_address').value     = company.address     || '';
+  document.getElementById('s_phone').value       = company.phone       || '';
+  document.getElementById('s_email').value       = company.email       || '';
+  document.getElementById('s_license').value     = company.license     || '';
+  document.getElementById('s_ein').value         = company.ein         || '';
+  document.getElementById('s_client').value      = company.client      || '';
+  document.getElementById('s_clientPhone').value = company.clientPhone || '';
+  document.getElementById('s_clientEmail').value = company.clientEmail || '';
+  document.getElementById('s_clientAddr').value  = company.clientAddr  || '';
+  document.getElementById('s_projectAddr').value = company.projectAddr || '';
   document.getElementById('settingsModal').classList.remove('hidden');
 }
 
 function saveSettings() {
   company = {
-    name:    document.getElementById('s_name').value,
-    owner:   document.getElementById('s_owner').value,
-    address: document.getElementById('s_address').value,
-    phone:   document.getElementById('s_phone').value,
-    email:   document.getElementById('s_email').value,
-    license: document.getElementById('s_license').value,
-    ein:     document.getElementById('s_ein').value,
+    name:        document.getElementById('s_name').value,
+    owner:       document.getElementById('s_owner').value,
+    address:     document.getElementById('s_address').value,
+    phone:       document.getElementById('s_phone').value,
+    email:       document.getElementById('s_email').value,
+    license:     document.getElementById('s_license').value,
+    ein:         document.getElementById('s_ein').value,
+    client:      document.getElementById('s_client').value,
+    clientPhone: document.getElementById('s_clientPhone').value,
+    clientEmail: document.getElementById('s_clientEmail').value,
+    clientAddr:  document.getElementById('s_clientAddr').value,
+    projectAddr: document.getElementById('s_projectAddr').value,
   };
   localStorage.setItem('aa_company', JSON.stringify(company));
   closeModal('settingsModal');
