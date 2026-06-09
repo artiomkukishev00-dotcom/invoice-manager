@@ -338,17 +338,6 @@ nav button.primary:hover { background: #e0981a; }
       <div class="form-group"><label>HIC License</label><input id="s_license"></div>
       <div class="form-group"><label>EIN / Tax ID</label><input id="s_ein"></div>
     </div>
-    <hr style="margin:16px 0;border:none;border-top:1.5px solid var(--border)">
-    <h3 style="font-size:.9rem;color:var(--green-dark);margin-bottom:12px">Client Info</h3>
-    <div class="form-row">
-      <div class="form-group"><label>Client Name</label><input id="s_client" placeholder="Full name or company"></div>
-      <div class="form-group"><label>Client Phone</label><input id="s_clientPhone" placeholder="+1 (xxx) xxx-xxxx"></div>
-      <div class="form-group"><label>Client Email</label><input id="s_clientEmail" placeholder="client@email.com"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>Billing Address</label><textarea id="s_clientAddr" rows="2" placeholder="Street, City, State ZIP"></textarea></div>
-      <div class="form-group"><label>Project / Job Address</label><textarea id="s_projectAddr" rows="2" placeholder="If different from billing"></textarea></div>
-    </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('settingsModal')">Cancel</button>
       <button class="btn btn-save" onclick="saveSettings()">Save</button>
@@ -367,12 +356,7 @@ const COMPANY_DEFAULTS = {
   phone: '+1 (267) 979-5505',
   email: '',
   license: 'HIC License #PA200647',
-  ein: '',
-  client: '',
-  clientPhone: '',
-  clientEmail: '',
-  clientAddr: '',
-  projectAddr: ''
+  ein: ''
 };
 
 function fmtDate(iso) {
@@ -397,7 +381,11 @@ function persist() { localStorage.setItem('aa_docs', JSON.stringify(docs)); }
 function nextNum(type) {
   const prefix = type === 'invoice' ? 'INV' : 'EST';
   const existing = docs.filter(d => d.type === type);
-  return prefix + '-' + String(existing.length + 1).padStart(3, '0');
+  const maxNum = existing.reduce((max, d) => {
+    const n = parseInt((d.number || '').replace(/\D/g, '')) || 0;
+    return Math.max(max, n);
+  }, 0);
+  return prefix + '-' + String(maxNum + 1).padStart(3, '0');
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -498,18 +486,11 @@ function getDoc() { return docs.find(d => d.id === currentId); }
 function renderEditor(doc) {
   const c = company;
   const typeLabel = doc.type === 'invoice' ? 'INVOICE' : 'ESTIMATE';
-  const statusCycle = { draft:'sent', sent: doc.type==='invoice'?'paid':'approved', approved:'paid', paid:'draft' };
   const statusClass = { draft:'s-draft', sent:'s-sent', approved:'s-approved', paid:'s-paid' };
   const statusText  = { draft:'Draft', sent:'Sent', approved:'Approved ✓', paid:'Paid ✓' };
 
   const laborRows = doc.laborItems.map((r,i) => laborRow(r,i)).join('');
   const matRows   = doc.matItems.map((r,i) => matRow(r,i)).join('');
-
-  const laborSub  = calcLabor(doc);
-  const matTotal  = calcMaterials(doc);
-  const sub       = calcSubtotal(doc);
-  const taxAmt    = sub * (parseFloat(doc.taxRate)||0) / 100;
-  const total     = sub + taxAmt;
 
   document.getElementById('editorArea').innerHTML = `
   <div class="editor-card">
@@ -823,11 +804,6 @@ function openSettings() {
   document.getElementById('s_email').value       = company.email       || '';
   document.getElementById('s_license').value     = company.license     || '';
   document.getElementById('s_ein').value         = company.ein         || '';
-  document.getElementById('s_client').value      = company.client      || '';
-  document.getElementById('s_clientPhone').value = company.clientPhone || '';
-  document.getElementById('s_clientEmail').value = company.clientEmail || '';
-  document.getElementById('s_clientAddr').value  = company.clientAddr  || '';
-  document.getElementById('s_projectAddr').value = company.projectAddr || '';
   document.getElementById('settingsModal').classList.remove('hidden');
 }
 
@@ -840,11 +816,6 @@ function saveSettings() {
     email:       document.getElementById('s_email').value,
     license:     document.getElementById('s_license').value,
     ein:         document.getElementById('s_ein').value,
-    client:      document.getElementById('s_client').value,
-    clientPhone: document.getElementById('s_clientPhone').value,
-    clientEmail: document.getElementById('s_clientEmail').value,
-    clientAddr:  document.getElementById('s_clientAddr').value,
-    projectAddr: document.getElementById('s_projectAddr').value,
   };
   localStorage.setItem('aa_company', JSON.stringify(company));
   closeModal('settingsModal');
