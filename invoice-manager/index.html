@@ -516,8 +516,8 @@ function renderEditor(doc) {
         <div class="ftb">
           <div class="ftb-label">To</div>
           <div class="ftb-value">
-            <b>${c.client||'—'}</b>
-            ${c.clientAddr?c.clientAddr.replace(/\n/g,'<br>'):''}${c.clientPhone?'<br>'+c.clientPhone:''}${c.clientEmail?'<br>'+c.clientEmail:''}
+            <b>${doc.client||'—'}</b>
+            ${doc.clientAddr?doc.clientAddr.replace(/\n/g,'<br>'):''}${doc.clientPhone?'<br>'+doc.clientPhone:''}${doc.clientEmail?'<br>'+doc.clientEmail:''}
           </div>
         </div>
         <div class="ftb ftb-date">
@@ -548,6 +548,18 @@ function renderEditor(doc) {
         <div class="form-group"><label>Document #</label><input value="${doc.number}" oninput="uf('number',this.value)"></div>
         <div class="form-group"><label>Date</label><input type="date" value="${doc.date}" oninput="uf('date',this.value)"></div>
         <div class="form-group"><label>${doc.type==='invoice'?'Due Date':'Valid Until'}</label><input type="date" value="${doc.due}" oninput="uf('due',this.value)"></div>
+      </div>
+
+      <!-- CLIENT -->
+      <div class="section-title">Client / Job Info</div>
+      <div class="form-row">
+        <div class="form-group"><label>Client Name</label><input value="${doc.client||''}" oninput="uf('client',this.value)" placeholder="Full name or company"></div>
+        <div class="form-group"><label>Phone</label><input value="${doc.clientPhone||''}" oninput="uf('clientPhone',this.value)" placeholder="+1 (xxx) xxx-xxxx"></div>
+        <div class="form-group"><label>Email</label><input value="${doc.clientEmail||''}" oninput="uf('clientEmail',this.value)" placeholder="client@email.com"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Billing Address</label><textarea oninput="uf('clientAddr',this.value)" rows="2" placeholder="Street, City, State ZIP">${doc.clientAddr||''}</textarea></div>
+        <div class="form-group"><label>Project / Job Address</label><textarea oninput="uf('projectAddr',this.value)" rows="2" placeholder="If different from billing">${doc.projectAddr||''}</textarea></div>
       </div>
 
       <!-- LABOR / SERVICES -->
