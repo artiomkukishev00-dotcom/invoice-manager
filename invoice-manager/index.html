@@ -491,6 +491,7 @@ function renderEditor(doc) {
 
   const laborRows = doc.laborItems.map((r,i) => laborRow(r,i)).join('');
   const matRows   = doc.matItems.map((r,i) => matRow(r,i)).join('');
+  const matTotal  = calcMaterials(doc);
 
   document.getElementById('editorArea').innerHTML = `
   <div class="editor-card">
