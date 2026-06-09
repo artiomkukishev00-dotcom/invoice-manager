@@ -98,7 +98,7 @@ nav button.primary:hover { background: #e0981a; }
   margin-bottom: 18px;
 }
 .doc-header-brand { display: flex; align-items: center; gap: 12px; }
-.doc-header-logo { width: 160px; height: auto; flex-shrink: 0; border-radius: 6px; }
+.doc-header-logo { width: 180px; height: auto; flex-shrink: 0; }
 .doc-header-brand-text .co-name {
   font-size: .95rem; font-weight: 800; color: var(--green-dark); letter-spacing: .3px;
   text-transform: uppercase;
@@ -238,7 +238,13 @@ nav button.primary:hover { background: #e0981a; }
   position: fixed; inset: 0; background: rgba(0,0,0,.45);
   display: flex; align-items: center; justify-content: center; z-index: 300;
 }
-.modal-box { background: white; border-radius: 12px; padding: 28px; width: 420px; max-width: 95vw; }
+.modal-box { background: white; border-radius: 12px; padding: 28px; width: 480px; max-width: 95vw; }
+.edit-client-btn {
+  font-size: .7rem; padding: 3px 10px; border-radius: 5px; cursor: pointer;
+  background: none; border: 1px solid var(--green); color: var(--green);
+  margin-top: 6px; transition: all .15s;
+}
+.edit-client-btn:hover { background: var(--green); color: white; }
 .modal-box h2 { margin-bottom: 18px; color: var(--green-dark); }
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 .hidden { display: none !important; }
@@ -246,7 +252,7 @@ nav button.primary:hover { background: #e0981a; }
 /* ── PRINT ─────────────────────────────────────────────── */
 @media print {
   nav, .sidebar, .doc-actions, .type-switcher, .status-row,
-  .add-row-btn, .del-line, .del-doc, .mat-section { display: none !important; }
+  .add-row-btn, .del-line, .del-doc, .mat-section, .edit-client-btn { display: none !important; }
   body, .editor { background: white; padding: 0; }
   .app { display: block; }
   .editor { padding: 0; }
@@ -272,6 +278,7 @@ nav button.primary:hover { background: #e0981a; }
   </div>
   <button onclick="openNewDoc('estimate')">+ Estimate</button>
   <button class="primary" onclick="openNewDoc('invoice')">+ Invoice</button>
+  <button onclick="openSettings()">⚙ Settings</button>
 </nav>
 
 <div class="app">
@@ -296,6 +303,24 @@ nav button.primary:hover { background: #e0981a; }
   </div>
 </div>
 
+<!-- Client Modal -->
+<div class="modal-bg hidden" id="clientModal">
+  <div class="modal-box">
+    <h2>Client Info</h2>
+    <div class="form-row">
+      <div class="form-group"><label>Client Name</label><input id="c_client" placeholder="Full name or company"></div>
+      <div class="form-group"><label>Phone</label><input id="c_clientPhone" placeholder="+1 (xxx) xxx-xxxx"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px"><label>Email</label><input id="c_clientEmail" placeholder="client@email.com"></div>
+    <div class="form-group" style="margin-bottom:12px"><label>Billing Address</label><textarea id="c_clientAddr" rows="2" placeholder="Street, City, State ZIP"></textarea></div>
+    <div class="form-group" style="margin-bottom:12px"><label>Project / Job Address</label><textarea id="c_projectAddr" rows="2" placeholder="If different from billing"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('clientModal')">Cancel</button>
+      <button class="btn btn-save" onclick="saveClient()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- Settings Modal -->
 <div class="modal-bg hidden" id="settingsModal">
   <div class="modal-box">
@@ -312,6 +337,17 @@ nav button.primary:hover { background: #e0981a; }
     <div class="form-row">
       <div class="form-group"><label>HIC License</label><input id="s_license"></div>
       <div class="form-group"><label>EIN / Tax ID</label><input id="s_ein"></div>
+    </div>
+    <hr style="margin:16px 0;border:none;border-top:1.5px solid var(--border)">
+    <h3 style="font-size:.9rem;color:var(--green-dark);margin-bottom:12px">Client Info</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Client Name</label><input id="s_client" placeholder="Full name or company"></div>
+      <div class="form-group"><label>Client Phone</label><input id="s_clientPhone" placeholder="+1 (xxx) xxx-xxxx"></div>
+      <div class="form-group"><label>Client Email</label><input id="s_clientEmail" placeholder="client@email.com"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Billing Address</label><textarea id="s_clientAddr" rows="2" placeholder="Street, City, State ZIP"></textarea></div>
+      <div class="form-group"><label>Project / Job Address</label><textarea id="s_projectAddr" rows="2" placeholder="If different from billing"></textarea></div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('settingsModal')">Cancel</button>
@@ -331,7 +367,12 @@ const COMPANY_DEFAULTS = {
   phone: '+1 (267) 979-5505',
   email: '',
   license: 'HIC License #PA200647',
-  ein: ''
+  ein: '',
+  client: '',
+  clientPhone: '',
+  clientEmail: '',
+  clientAddr: '',
+  projectAddr: ''
 };
 
 function fmtDate(iso) {
@@ -502,6 +543,7 @@ function renderEditor(doc) {
             <b>${doc.client||'—'}</b>
             ${doc.clientAddr?doc.clientAddr.replace(/\n/g,'<br>'):''}${doc.clientPhone?'<br>'+doc.clientPhone:''}${doc.clientEmail?'<br>'+doc.clientEmail:''}
           </div>
+          <button class="edit-client-btn" onclick="openClientModal()">✏ Edit Client</button>
         </div>
         <div class="ftb ftb-date">
           <div class="ftb-label">Date</div>
@@ -531,18 +573,6 @@ function renderEditor(doc) {
         <div class="form-group"><label>Document #</label><input value="${doc.number}" oninput="uf('number',this.value)"></div>
         <div class="form-group"><label>Date</label><input type="date" value="${doc.date}" oninput="uf('date',this.value)"></div>
         <div class="form-group"><label>${doc.type==='invoice'?'Due Date':'Valid Until'}</label><input type="date" value="${doc.due}" oninput="uf('due',this.value)"></div>
-      </div>
-
-      <!-- CLIENT -->
-      <div class="section-title">Client / Job Info</div>
-      <div class="form-row">
-        <div class="form-group"><label>Client Name</label><input value="${doc.client||''}" oninput="uf('client',this.value)" placeholder="Full name or company"></div>
-        <div class="form-group"><label>Phone</label><input value="${doc.clientPhone||''}" oninput="uf('clientPhone',this.value)" placeholder="+1 (xxx) xxx-xxxx"></div>
-        <div class="form-group"><label>Email</label><input value="${doc.clientEmail||''}" oninput="uf('clientEmail',this.value)" placeholder="client@email.com"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Billing Address</label><textarea oninput="uf('clientAddr',this.value)" rows="2" placeholder="Street, City, State ZIP">${doc.clientAddr||''}</textarea></div>
-        <div class="form-group"><label>Project / Job Address</label><textarea oninput="uf('projectAddr',this.value)" rows="2" placeholder="If different from billing">${doc.projectAddr||''}</textarea></div>
       </div>
 
       <!-- LABOR / SERVICES -->
@@ -762,26 +792,59 @@ function saveNow(btn) {
 // ─────────────────────────────────────────────────────────────
 // SETTINGS
 // ─────────────────────────────────────────────────────────────
+function openClientModal() {
+  const doc = getDoc(); if (!doc) return;
+  document.getElementById('c_client').value      = doc.client      || '';
+  document.getElementById('c_clientPhone').value = doc.clientPhone || '';
+  document.getElementById('c_clientEmail').value = doc.clientEmail || '';
+  document.getElementById('c_clientAddr').value  = doc.clientAddr  || '';
+  document.getElementById('c_projectAddr').value = doc.projectAddr || '';
+  document.getElementById('clientModal').classList.remove('hidden');
+}
+
+function saveClient() {
+  const doc = getDoc(); if (!doc) return;
+  doc.client      = document.getElementById('c_client').value;
+  doc.clientPhone = document.getElementById('c_clientPhone').value;
+  doc.clientEmail = document.getElementById('c_clientEmail').value;
+  doc.clientAddr  = document.getElementById('c_clientAddr').value;
+  doc.projectAddr = document.getElementById('c_projectAddr').value;
+  persist();
+  closeModal('clientModal');
+  rerender();
+  renderList();
+}
+
 function openSettings() {
-  document.getElementById('s_name').value    = company.name    || '';
-  document.getElementById('s_owner').value   = company.owner   || '';
-  document.getElementById('s_address').value = company.address || '';
-  document.getElementById('s_phone').value   = company.phone   || '';
-  document.getElementById('s_email').value   = company.email   || '';
-  document.getElementById('s_license').value = company.license || '';
-  document.getElementById('s_ein').value     = company.ein     || '';
+  document.getElementById('s_name').value        = company.name        || '';
+  document.getElementById('s_owner').value       = company.owner       || '';
+  document.getElementById('s_address').value     = company.address     || '';
+  document.getElementById('s_phone').value       = company.phone       || '';
+  document.getElementById('s_email').value       = company.email       || '';
+  document.getElementById('s_license').value     = company.license     || '';
+  document.getElementById('s_ein').value         = company.ein         || '';
+  document.getElementById('s_client').value      = company.client      || '';
+  document.getElementById('s_clientPhone').value = company.clientPhone || '';
+  document.getElementById('s_clientEmail').value = company.clientEmail || '';
+  document.getElementById('s_clientAddr').value  = company.clientAddr  || '';
+  document.getElementById('s_projectAddr').value = company.projectAddr || '';
   document.getElementById('settingsModal').classList.remove('hidden');
 }
 
 function saveSettings() {
   company = {
-    name:    document.getElementById('s_name').value,
-    owner:   document.getElementById('s_owner').value,
-    address: document.getElementById('s_address').value,
-    phone:   document.getElementById('s_phone').value,
-    email:   document.getElementById('s_email').value,
-    license: document.getElementById('s_license').value,
-    ein:     document.getElementById('s_ein').value,
+    name:        document.getElementById('s_name').value,
+    owner:       document.getElementById('s_owner').value,
+    address:     document.getElementById('s_address').value,
+    phone:       document.getElementById('s_phone').value,
+    email:       document.getElementById('s_email').value,
+    license:     document.getElementById('s_license').value,
+    ein:         document.getElementById('s_ein').value,
+    client:      document.getElementById('s_client').value,
+    clientPhone: document.getElementById('s_clientPhone').value,
+    clientEmail: document.getElementById('s_clientEmail').value,
+    clientAddr:  document.getElementById('s_clientAddr').value,
+    projectAddr: document.getElementById('s_projectAddr').value,
   };
   localStorage.setItem('aa_company', JSON.stringify(company));
   closeModal('settingsModal');
